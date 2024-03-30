@@ -1,10 +1,10 @@
 {
-  "base" : "/Users/thearyanahmed",
+  "base" : "/Users/thearyanahmed/web/projects/dux/tests/",
   "mapping" : {
     "mp4,avi,videoext": "videos",
     "regex:^pikachu-.*$" : "project-pikachu",
-    "rb" : "@code/ruby",
-    "py" : "@dux-test/python"
+    "rb" : "ruby",
+    "py" : "python"
   },
   "alias" : {
     "opensaas" : "web/projects/opensaas",

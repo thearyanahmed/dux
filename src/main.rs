@@ -86,34 +86,28 @@ fn main() -> anyhow::Result<()> {
                 let parts: Vec<&str> = key.split(",").collect();
 
                 for ext in parts {
-                    if let Some(v) = mapped.get(ext) {
+                    if let Some(files_to_move) = mapped.get(ext) {
                         let base = config.base.clone();
 
-                        let x = match base == "" {
-                            true => {
-                                let p = PathBuf::from(target_dir.clone());
-                                p.to_string_lossy().to_string()
-                            }
+                        let destination = match base == "" {
+                            true => PathBuf::from(target_dir.clone()),
                             false => {
                                 let mut path = PathBuf::from(base);
                                 path.push(target_dir.clone());
-
-                                path.to_string_lossy().to_string()
+                                path
                             }
                         };
-                        // Push the filename onto the PathBuf
-                        println!("v {:?} \n x is {}", v, x);
 
-                        println!("the final path is, {}", x);
+                        // need to check if destination exists or not
+
+                        for f in files_to_move {
+                            let new_dest = destination.join(f.file_name().unwrap());
+                            println!("new_dest {:#?}", new_dest);
+                            fs::rename(&f, new_dest).expect("here is the problem");
+                        }
                     }
                 }
             }
-
-            // loop over the extenions,
-            // split them
-            // inside the split, check if key exists in files vec,
-            // if yes, move files to that location
-            // else, display the problem
         }
         Command::Config => {
             println!("display config map");
