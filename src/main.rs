@@ -51,9 +51,6 @@ enum Command {
         config: Option<String>,
     },
 
-    /// Displays currently loaded config map
-    Config,
-    /// Reads config (testing purpose only)
     ReadConfig {
         #[clap(short = 'c')]
         config: Option<String>,
@@ -68,8 +65,6 @@ fn main() -> anyhow::Result<()> {
 
     match args.command {
         Command::Organize { dir, config } => {
-            //            let dir = "/Users/thearyanahmed/web/projects/dux/tests/fake/";
-
             let config = parse_config(config, default_config_path)?;
 
             ensure_path_is_dir(&dir)?;
@@ -110,9 +105,6 @@ fn main() -> anyhow::Result<()> {
             }
 
             println!("files organized")
-        }
-        Command::Config => {
-            println!("display config map");
         }
         Command::ReadConfig { config } => {
             let cfg = parse_config(config, default_config_path)?;
