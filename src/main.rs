@@ -1,9 +1,10 @@
-use anyhow::{Context, Ok, Result};
+use anyhow::{anyhow, Context, Ok, Result};
 use clap::{Parser, Subcommand};
 
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
+use std::path::{Path, PathBuf};
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -66,16 +67,26 @@ fn main() -> anyhow::Result<()> {
     let default_config_path = "/Users/thearyanahmed/web/projects/dux/dux.json";
 
     match args.command {
-        Command::Organize { dir, config: _ } => {
-            println!("Run organize on {}", dir);
+        Command::Organize { dir: _, config: _ } => {
+            let dir = "/Users/thearyanahmed/web/projects/dux/tests/fake/";
 
-            // Steps:
-            // Read the config,
-            // Read aliases and put it inside the map
-            // Read the base
-            // Read from the dir
-            // Put the files into a map, HashMap::<String<extension>, String<AbsolutePath>>
-            // move the files to from that point to the target point
+            println!("run organize on {}", dir);
+
+            ensure_path_is_dir(dir)?;
+
+            let dir = Path::new(dir);
+
+            let files = list_files_recursive(dir)?;
+
+            let mapped = map_files_by_extension(files);
+
+            l // Steps:
+              // Read the config.alias,
+              // Read aliases and put it inside the map
+              // Read the base
+              // Read from the dir
+              // Put the files into a map, HashMap::<String<extension>, String<AbsolutePath>>
+              // move the files to from that point to the target point
         }
         Command::Config => {
             println!("display config map");
@@ -93,6 +104,47 @@ fn main() -> anyhow::Result<()> {
         }
     }
     Ok(())
+}
+
+pub fn map_files_by_extension(files: Vec<PathBuf>) -> HashMap<String, Vec<PathBuf>> {
+    let mut map: HashMap<String, Vec<PathBuf>> = HashMap::new();
+
+    for file in files {
+        if let Some(extension) = file.extension().and_then(|e| e.to_str()) {
+            map.entry(extension.to_string())
+                .or_insert_with(Vec::new)
+                .push(file);
+        }
+    }
+
+    map
+}
+
+pub fn list_files_recursive(path: &Path) -> Result<Vec<PathBuf>> {
+    let mut files = Vec::new();
+
+    for entry in fs::read_dir(path)? {
+        let entry = entry?;
+        let path = entry.path();
+
+        if path.is_dir() {
+            let mut subdir_files = list_files_recursive(&path)?;
+            files.append(&mut subdir_files);
+        } else {
+            files.push(path);
+        }
+    }
+    Ok(files)
+}
+
+pub fn ensure_path_is_dir(path: &str) -> Result<()> {
+    match fs::metadata(path) {
+        core::result::Result::Ok(metadata) => match metadata.is_dir() {
+            true => Ok(()),
+            false => Err(anyhow!("{} is not a directory", path)),
+        },
+        Err(err) => Err(err.into()),
+    }
 }
 
 pub fn read_config(path: String) -> Result<Config> {
