@@ -67,16 +67,14 @@ fn main() -> anyhow::Result<()> {
     let default_config_path = String::from("/Users/thearyanahmed/web/projects/dux/dux.json");
 
     match args.command {
-        Command::Organize { dir: _, config } => {
-            let dir = "/Users/thearyanahmed/web/projects/dux/tests/fake/";
-
-            println!("run organize on {}", dir);
+        Command::Organize { dir, config } => {
+            //            let dir = "/Users/thearyanahmed/web/projects/dux/tests/fake/";
 
             let config = parse_config(config, default_config_path)?;
 
-            ensure_path_is_dir(dir)?;
+            ensure_path_is_dir(&dir)?;
 
-            let dir = Path::new(dir);
+            let dir = Path::new(&dir);
 
             let files = list_files_recursive(dir)?;
 
@@ -99,15 +97,19 @@ fn main() -> anyhow::Result<()> {
                         };
 
                         // need to check if destination exists or not
+                        if !destination.exists() {
+                            fs::create_dir_all(&destination)?;
+                        }
 
-                        for f in files_to_move {
-                            let new_dest = destination.join(f.file_name().unwrap());
-                            println!("new_dest {:#?}", new_dest);
-                            fs::rename(&f, new_dest).expect("here is the problem");
+                        for file in files_to_move {
+                            let new_destination = destination.join(file.file_name().unwrap());
+                            fs::rename(&file, new_destination)?;
                         }
                     }
                 }
             }
+
+            println!("files organized")
         }
         Command::Config => {
             println!("display config map");
