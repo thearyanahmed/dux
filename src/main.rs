@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fmt::write;
 use std::fs;
 
 #[derive(Debug, Deserialize)]
@@ -12,17 +13,21 @@ pub struct Config {
     alias: HashMap<String, String>,
 }
 
-impl Config {
-    pub fn print(&self) {
-        println!("base: {}", self.base);
-        println!("map:");
+impl Config {}
+
+impl std::fmt::Display for Config {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "base: {}", self.base)?;
+        writeln!(f, "map:")?;
         for (key, value) in &self.map {
-            println!("  {}: {}", key, value);
+            writeln!(f, "  {}: {}", key, value)?;
         }
-        println!("alias:");
+        writeln!(f, "Alias:")?;
         for (key, value) in &self.alias {
-            println!("  {}: {}", key, value);
+            writeln!(f, "  {}: {}", key, value)?;
         }
+
+        anyhow::Result::Ok(())
     }
 }
 
@@ -62,8 +67,7 @@ fn main() -> anyhow::Result<()> {
 
         Command::ReadConfig => {
             let config = read_config()?;
-
-            config.print();
+            println!("config {}", config);
         }
     }
     Ok(())
