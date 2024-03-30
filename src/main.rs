@@ -1,15 +1,15 @@
-use anyhow::{anyhow, Context, Ok, Result};
+use anyhow::{anyhow, Context, Result};
 use clap::{Parser, Subcommand};
-
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::result::Result::Ok;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
     base: String,
-    map: HashMap<String, String>,
+    mapping: HashMap<String, String>,
     alias: HashMap<String, String>,
 }
 
@@ -18,8 +18,8 @@ impl Config {}
 impl std::fmt::Display for Config {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "base: {}", self.base)?;
-        writeln!(f, "map:")?;
-        for (key, value) in &self.map {
+        writeln!(f, "mapping:")?;
+        for (key, value) in &self.mapping {
             writeln!(f, "  {}: {}", key, value)?;
         }
         writeln!(f, "Alias:")?;
@@ -64,13 +64,15 @@ fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     // Note: should be something lile ~/.config/dux/dux.conf
-    let default_config_path = "/Users/thearyanahmed/web/projects/dux/dux.json";
+    let default_config_path = String::from("/Users/thearyanahmed/web/projects/dux/dux.json");
 
     match args.command {
-        Command::Organize { dir: _, config: _ } => {
+        Command::Organize { dir: _, config } => {
             let dir = "/Users/thearyanahmed/web/projects/dux/tests/fake/";
 
             println!("run organize on {}", dir);
+
+            let config = parse_config(config, default_config_path)?;
 
             ensure_path_is_dir(dir)?;
 
@@ -80,30 +82,60 @@ fn main() -> anyhow::Result<()> {
 
             let mapped = map_files_by_extension(files);
 
-            l // Steps:
-              // Read the config.alias,
-              // Read aliases and put it inside the map
-              // Read the base
-              // Read from the dir
-              // Put the files into a map, HashMap::<String<extension>, String<AbsolutePath>>
-              // move the files to from that point to the target point
+            for (key, target_dir) in config.mapping {
+                let parts: Vec<&str> = key.split(",").collect();
+
+                for ext in parts {
+                    if let Some(v) = mapped.get(ext) {
+                        let base = config.base.clone();
+
+                        let x = match base == "" {
+                            true => {
+                                let p = PathBuf::from(target_dir.clone());
+                                p.to_string_lossy().to_string()
+                            }
+                            false => {
+                                let mut path = PathBuf::from(base);
+                                path.push(target_dir.clone());
+
+                                path.to_string_lossy().to_string()
+                            }
+                        };
+                        // Push the filename onto the PathBuf
+                        println!("v {:?} \n x is {}", v, x);
+
+                        println!("the final path is, {}", x);
+                    }
+                }
+            }
+
+            // loop over the extenions,
+            // split them
+            // inside the split, check if key exists in files vec,
+            // if yes, move files to that location
+            // else, display the problem
         }
         Command::Config => {
             println!("display config map");
         }
         Command::ReadConfig { config } => {
-            let path = match config {
-                Some(cf) => cf,
-                None => default_config_path.to_string(),
-            };
+            let cfg = parse_config(config, default_config_path)?;
 
-            println!("reading from {}", path);
-
-            let config = read_config(path)?;
-            println!("config {}", config);
+            println!("config -> {}", cfg)
         }
     }
     Ok(())
+}
+
+pub fn parse_config(config_path: Option<String>, default_config: String) -> Result<Config> {
+    let path = match config_path {
+        Some(cf) => cf.to_string(),
+        None => default_config.to_string(),
+    };
+
+    let config = read_config(path)?;
+
+    Ok(config)
 }
 
 pub fn map_files_by_extension(files: Vec<PathBuf>) -> HashMap<String, Vec<PathBuf>> {
