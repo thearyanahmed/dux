@@ -7,12 +7,12 @@ extensions=("png" "jpg" "jpeg" "mp4" "php" "py" "rs" "docs" "dox" "xl")
 num_files=5
 
 # Create tests directory if it doesn't exist
-mkdir -p tests
+mkdir -p tests/fake
 
 # Loop through each extension and create files inside tests directory
 for ext in "${extensions[@]}"; do
     for (( i=1; i<=$num_files; i++ )); do
-        touch "tests/file$i.$ext"
+        touch "tests/fake/file$i.$ext"
     done
 done
 
