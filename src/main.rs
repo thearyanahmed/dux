@@ -1,9 +1,8 @@
 use anyhow::{Context, Ok, Result};
 use clap::{Parser, Subcommand};
 
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::collections::HashMap;
-use std::fmt::write;
 use std::fs;
 
 #[derive(Debug, Deserialize)]
@@ -46,39 +45,52 @@ enum Command {
     Organize {
         #[clap(short = 'd')]
         dir: String,
+
+        #[clap(short = 'c')]
+        config: Option<String>,
     },
 
     /// Displays currently loaded config map
     Config,
     /// Reads config (testing purpose only)
-    ReadConfig,
+    ReadConfig {
+        #[clap(short = 'c')]
+        config: Option<String>,
+    },
 }
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
+    let default_config_path = "/Users/thearyanahmed/web/projects/dux/dux.json";
+
     match args.command {
-        Command::Organize { dir } => {
+        Command::Organize { dir, config: _ } => {
             println!("Run organize on {}", dir);
         }
         Command::Config => {
             println!("display config map");
         }
+        Command::ReadConfig { config } => {
+            let path = match config {
+                Some(cf) => cf,
+                None => default_config_path.to_string(),
+            };
 
-        Command::ReadConfig => {
-            let config = read_config()?;
+            println!("reading from {}", path);
+
+            let config = read_config(path)?;
             println!("config {}", config);
         }
     }
     Ok(())
 }
 
-// TODO: config path should be a parameter
-pub fn read_config() -> Result<Config> {
+pub fn read_config(path: String) -> Result<Config> {
     // Note: need to add absolute path. The target is running from target/debug/dux. When it looks
     // for dux.json inside that, it would not find it.
-    let dux_conf = fs::read_to_string("/Users/thearyanahmed/web/projects/dux/dux.json")
-        .context("failed to read dux.json")?;
+    let dux_conf =
+        fs::read_to_string(path).context(format!("failed to read config from given path"))?;
 
     // Parse the JSON string into a Config struct
     let config: Config = serde_json::from_str(&dux_conf).context("failed to map config file")?;
