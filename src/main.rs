@@ -62,11 +62,20 @@ enum Command {
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
+    // Note: should be something lile ~/.config/dux/dux.conf
     let default_config_path = "/Users/thearyanahmed/web/projects/dux/dux.json";
 
     match args.command {
         Command::Organize { dir, config: _ } => {
             println!("Run organize on {}", dir);
+
+            // Steps:
+            // Read the config,
+            // Read aliases and put it inside the map
+            // Read the base
+            // Read from the dir
+            // Put the files into a map, HashMap::<String<extension>, String<AbsolutePath>>
+            // move the files to from that point to the target point
         }
         Command::Config => {
             println!("display config map");
